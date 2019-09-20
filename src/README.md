@@ -8,3 +8,5 @@ nmake
 Change Xnvlink path in build.make to avoid space in path error
 
 nmake again
+
+https://docs.python.org/3/faq/windows.html#is-a-pyd-file-the-same-as-a-dll

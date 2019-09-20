@@ -30,10 +30,10 @@ static PyMethodDef module_functions[] = {
 };
 
 extern "C" {
-PyMODINIT_FUNC PyInit_libKMCUDA(void) {
+PyMODINIT_FUNC PyInit_KMCUDA(void) {
   static struct PyModuleDef moduledef = {
       PyModuleDef_HEAD_INIT,
-      "libKMCUDA",         /* m_name */
+      "KMCUDA",         /* m_name */
       module_docstring,    /* m_doc */
       -1,                  /* m_size */
       module_functions,    /* m_methods */

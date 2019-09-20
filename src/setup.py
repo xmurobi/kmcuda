@@ -13,11 +13,15 @@ class SetupConfigurationError(Exception):
 
 
 class CMakeBuild(build_py):
-    SHLIB = "libKMCUDA.so"
+    SHLIB = "KMCUDA.dll"
 
     def run(self):
         if not self.dry_run:
+            # self._cmake()
             self._build()
+        else:
+            self._build()
+
         super(CMakeBuild, self).run()
 
     def get_outputs(self, *args, **kwargs):
@@ -25,8 +29,17 @@ class CMakeBuild(build_py):
         outputs.extend(self._shared_lib)
         return outputs
 
-    def _build(self, builddir=None):
-        if platform != "darwin":
+    def _cmake(self):
+        if platform == "win32":
+            self.SHLIB = "KMCUDA.dll"
+            check_call(("cmake", 
+                "-G",
+                "NMake Makefiles", 
+                "-DCMAKE_BUILD_TYPE=Release", 
+                "-DDISABLE_R=y",
+                "-DCUDA_ARCH=30",
+                "."))
+        elif platform != "darwin":
             cuda_toolkit_dir = os.getenv("CUDA_TOOLKIT_ROOT_DIR")
             cuda_arch = os.getenv("CUDA_ARCH", "61")
             if cuda_toolkit_dir is None:
@@ -45,7 +58,15 @@ class CMakeBuild(build_py):
             check_call(("cmake", "-DCMAKE_BUILD_TYPE=Release", "-DDISABLE_R=y",
                         "-DCUDA_HOST_COMPILER=%s" % ccbin, "-DSUFFIX=.so", "."),
                        env=env)
-        check_call(("make", "-j%d" % cpu_count()))
+
+
+    def _build(self, builddir=None):
+       
+        if platform == "win32":
+            check_call(("nmake"))
+        else:
+            check_call(("make", "-j%d" % cpu_count()))
+
         self.mkpath(self.build_lib)
         dest = os.path.join(self.build_lib, self.SHLIB)
         copyfile(self.SHLIB, dest)
@@ -81,9 +102,8 @@ class HackedSdist(sdist):
                 "wrappers.h",
             ])
 
-
 setup(
-    name="libKMCUDA",
+    name="KMCUDA",
     description="Accelerated K-means and K-nn on GPU",
     version="6.2.3",
     license="Apache Software License",
@@ -91,7 +111,7 @@ setup(
     author_email="vadim@sourced.tech",
     url="https://github.com/src-d/kmcuda",
     download_url="https://github.com/src-d/kmcuda",
-    py_modules=["libKMCUDA"],
+    py_modules=["KMCUDA"],
     install_requires=["numpy"],
     distclass=BinaryDistribution,
     cmdclass={'build_py': CMakeBuild, "sdist": HackedSdist},
@@ -99,7 +119,7 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
-        "Operating System :: POSIX :: Linux",
+        "Operating System :: Windows :: POSIX :: Linux",
         "Topic :: Scientific/Engineering :: Information Analysis",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
