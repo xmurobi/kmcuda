@@ -13,11 +13,11 @@ class SetupConfigurationError(Exception):
 
 
 class CMakeBuild(build_py):
-    SHLIB = "KMCUDA.dll"
+    SHLIB = "libKMCUDA.so"
 
     def run(self):
         if not self.dry_run:
-            # self._cmake()
+            self._cmake()
             self._build()
         else:
             self._build()
@@ -31,13 +31,15 @@ class CMakeBuild(build_py):
 
     def _cmake(self):
         if platform == "win32":
-            self.SHLIB = "KMCUDA.dll"
+            self.SHLIB = "libKMCUDA.pyd"
             check_call(("cmake", 
                 "-G",
                 "NMake Makefiles", 
                 "-DCMAKE_BUILD_TYPE=Release", 
                 "-DDISABLE_R=y",
                 "-DCUDA_ARCH=30",
+                "-DSUFFIX=.pyd",
+                "-DPREFIX=lib",
                 "."))
         elif platform != "darwin":
             cuda_toolkit_dir = os.getenv("CUDA_TOOLKIT_ROOT_DIR")
@@ -50,14 +52,22 @@ class CMakeBuild(build_py):
                         "-DCUDA_ARCH=%s" % cuda_arch,
                         "."))
         else:
-            ccbin = os.getenv("CUDA_HOST_COMPILER", "/usr/bin/clang")
-            env = dict(os.environ)
-            env.setdefault("CC", "/usr/local/opt/llvm/bin/clang")
-            env.setdefault("CXX", "/usr/local/opt/llvm/bin/clang++")
-            env.setdefault("LDFLAGS", "-L/usr/local/opt/llvm/lib/")
-            check_call(("cmake", "-DCMAKE_BUILD_TYPE=Release", "-DDISABLE_R=y",
-                        "-DCUDA_HOST_COMPILER=%s" % ccbin, "-DSUFFIX=.so", "."),
-                       env=env)
+            # ccbin = os.getenv("CUDA_HOST_COMPILER", "/usr/local/opt/llvm/bin/clang")
+            # env = dict(os.environ)
+            # env.setdefault("CC", "/usr/local/opt/llvm/bin/clang")
+            # env.setdefault("CXX", "/usr/local/opt/llvm/bin/clang++")
+            # env.setdefault("LDFLAGS", "-L/usr/local/opt/llvm/lib/")
+            # check_call(("cmake", "-DCMAKE_BUILD_TYPE=Release", "-DDISABLE_R=y",
+            #             "-DCUDA_HOST_COMPILER=%s" % ccbin, "-DSUFFIX=.so", "."),
+            #            env=env)
+            check_call(("cmake", 
+                "-DCMAKE_BUILD_TYPE=Release", 
+                "-DDISABLE_R=y",
+                "-DCUDA_ARCH=30",
+                # "-DCUDA_HOST_COMPILER=%s" % ccbin,
+                "-DSUFFIX=.so",
+                "."), env=env)
+
 
 
     def _build(self, builddir=None):
@@ -103,7 +113,7 @@ class HackedSdist(sdist):
             ])
 
 setup(
-    name="KMCUDA",
+    name="libKMCUDA",
     description="Accelerated K-means and K-nn on GPU",
     version="6.2.3",
     license="Apache Software License",
@@ -111,7 +121,7 @@ setup(
     author_email="vadim@sourced.tech",
     url="https://github.com/src-d/kmcuda",
     download_url="https://github.com/src-d/kmcuda",
-    py_modules=["KMCUDA"],
+    py_modules=["libKMCUDA"],
     install_requires=["numpy"],
     distclass=BinaryDistribution,
     cmdclass={'build_py': CMakeBuild, "sdist": HackedSdist},
