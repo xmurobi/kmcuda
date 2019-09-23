@@ -1,6 +1,9 @@
 .idea
 cmake-build-*
 build
+.vscode
+.vscode/*
+.github
 **/*.cbp
 **/CMakeCache.txt
 **/CMakeFiles

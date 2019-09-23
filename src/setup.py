@@ -30,17 +30,18 @@ class CMakeBuild(build_py):
         return outputs
 
     def _cmake(self):
+        # windows
         if platform == "win32":
-            self.SHLIB = "libKMCUDA.pyd"
             check_call(("cmake", 
                 "-G",
                 "NMake Makefiles", 
+                "-DINTEL_CPP=y",
                 "-DCMAKE_BUILD_TYPE=Release", 
                 "-DDISABLE_R=y",
                 "-DCUDA_ARCH=30",
                 "-DSUFFIX=.pyd",
-                "-DPREFIX=lib",
                 "."))
+        # linux
         elif platform != "darwin":
             cuda_toolkit_dir = os.getenv("CUDA_TOOLKIT_ROOT_DIR")
             cuda_arch = os.getenv("CUDA_ARCH", "61")
@@ -51,6 +52,7 @@ class CMakeBuild(build_py):
                         "-DCUDA_TOOLKIT_ROOT_DIR=%s" % cuda_toolkit_dir,
                         "-DCUDA_ARCH=%s" % cuda_arch,
                         "."))
+        # macOS
         else:
             # ccbin = os.getenv("CUDA_HOST_COMPILER", "/usr/local/opt/llvm/bin/clang")
             # env = dict(os.environ)
@@ -64,22 +66,25 @@ class CMakeBuild(build_py):
                 "-DCMAKE_BUILD_TYPE=Release", 
                 "-DDISABLE_R=y",
                 "-DCUDA_ARCH=30",
-                # "-DCUDA_HOST_COMPILER=%s" % ccbin,
                 "-DSUFFIX=.so",
                 "."), env=env)
 
 
 
     def _build(self, builddir=None):
-       
+        libfile = "libKMCUDA.so"
+
         if platform == "win32":
+            check_call(("mkdir", "build"))
             check_call(("nmake"))
+            libfile = "libKMCUDA.pyd"
         else:
             check_call(("make", "-j%d" % cpu_count()))
-
+        
         self.mkpath(self.build_lib)
-        dest = os.path.join(self.build_lib, self.SHLIB)
-        copyfile(self.SHLIB, dest)
+
+        dest = os.path.join(self.build_lib, libfile)
+        copyfile(libfile, dest)
         self._shared_lib = [dest]
 
 
