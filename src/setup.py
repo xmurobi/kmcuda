@@ -16,11 +16,8 @@ class CMakeBuild(build_py):
     SHLIB = "libKMCUDA.so"
 
     def run(self):
-        if not self.dry_run:
-            self._cmake()
-            self._build()
-        else:
-            self._build()
+        self._cmake()
+        self._build()
 
         super(CMakeBuild, self).run()
 
@@ -55,7 +52,7 @@ class CMakeBuild(build_py):
         # macOS
         else:
             # ccbin = os.getenv("CUDA_HOST_COMPILER", "/usr/local/opt/llvm/bin/clang")
-            # env = dict(os.environ)
+            env = dict(os.environ)
             # env.setdefault("CC", "/usr/local/opt/llvm/bin/clang")
             # env.setdefault("CXX", "/usr/local/opt/llvm/bin/clang++")
             # env.setdefault("LDFLAGS", "-L/usr/local/opt/llvm/lib/")
@@ -75,7 +72,6 @@ class CMakeBuild(build_py):
         libfile = "libKMCUDA.so"
 
         if platform == "win32":
-            check_call(("mkdir", "build"))
             check_call(("nmake"))
             libfile = "libKMCUDA.pyd"
         else:

@@ -19,7 +19,13 @@ if (APPLE AND NOT CUDA_HOST_COMPILER)
   message(WARNING "CUDA_HOST_COMPILER is set to the default /usr/bin/clang; CUDA 8.0 requires 7.3 or older.")
   set(CUDA_HOST_COMPILER "/usr/bin/clang" CACHE FILEPATH "" FORCE)
 endif()
-find_package(CUDA QUIET REQUIRED)
+find_package(CUDA REQUIRED)
+
+# Windows nmake bug fix
+if (WIN32)
+  message(STATUS "Fix for cudart_static.lib in build.make which cause:: nvlink fatal : Could not open input file space in path issue")
+  set(CUDA_LIBRARIES)
+endif()
 
 # Python
 if (NOT DISABLE_PYTHON)
@@ -109,7 +115,6 @@ endif()
 #set_target_properties(KMCUDA PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if (WIN32)
-  message(STATUS "Manually remove the full path cudart_static.lib in build.make to fix nvlink fatal : Could not open input file space in path issue")
   target_link_libraries(KMCUDA curand)
 else()
   target_link_libraries(KMCUDA curand omp)
@@ -119,8 +124,9 @@ if (PYTHONLIBS_FOUND)
   include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
   if (WIN32)
     # fix the build fail issue caused by space
-    message(STATUS "Fixed path to fix nvlink fatal : Could not open input file space in path issue")
+    message(STATUS "Fixed for python:: nvlink fatal : Could not open input file space in path issue")
     target_link_libraries(KMCUDA "C:/PROGRA~2/IntelSWTools/intelpython3/libs/python36.lib")
+    #target_link_libraries(KMCUDA ${PYTHON_LIBRARIES})
     set_target_properties(KMCUDA PROPERTIES PREFIX "lib")
   else()
     target_link_libraries(KMCUDA ${PYTHON_LIBRARIES})
@@ -134,3 +140,4 @@ endif()
 if (SUFFIX)
   set_target_properties(KMCUDA PROPERTIES SUFFIX ${SUFFIX})
 endif()
+
