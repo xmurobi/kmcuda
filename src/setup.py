@@ -2,8 +2,10 @@ from multiprocessing import cpu_count
 import os
 from setuptools import setup
 from setuptools.command.build_py import build_py
+from setuptools.command.install_lib import install_lib
 from setuptools.command.sdist import sdist
 from setuptools.dist import Distribution
+from distutils import log
 from shutil import copyfile
 from subprocess import check_call
 from sys import platform
@@ -11,6 +13,13 @@ from sys import platform
 class SetupConfigurationError(Exception):
     pass
 
+class CMakeBuildInstall(install_lib):
+    def copy_tree(
+            self, infile, outfile,
+            preserve_mode=1, preserve_times=1, preserve_symlinks=0, level=1
+    ):
+        super(install_lib,self).copy_tree(infile, outfile,preserve_mode, preserve_times ,preserve_symlinks, level)
+        log.info("infile %s -> outfile %s", infile, outfile)
 
 class CMakeBuild(build_py):
     SHLIB = "libKMCUDA.so"
@@ -32,7 +41,7 @@ class CMakeBuild(build_py):
             check_call(("cmake", 
                 "-G",
                 "NMake Makefiles", 
-                "-DINTEL_CPP=y",
+                # "-DINTEL_CPP=y",
                 "-DCMAKE_BUILD_TYPE=Release", 
                 "-DDISABLE_R=y",
                 "-DCUDA_ARCH=30",
@@ -65,7 +74,6 @@ class CMakeBuild(build_py):
                 "-DCUDA_ARCH=30",
                 "-DSUFFIX=.so",
                 "."), env=env)
-
 
 
     def _build(self, builddir=None):
